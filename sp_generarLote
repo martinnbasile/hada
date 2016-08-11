@@ -1,0 +1,150 @@
+DELIMITER $$
+create procedure argentina_seguros.sp_generarLotes(IN tamanioLote int)
+begin
+    
+	
+	Declare idBaseCur int;
+	Declare idVuelta int;
+	Declare cantidadVueltas int; 
+	Declare cantidadCur int;
+	Declare cantidadDeNumerosDispo int;
+	Declare cantidadNumerosNeces int;
+	DECLARE cursorB CURSOR FOR SELECT idBase,cantidadIncluidaUltimoLote FROM PorcentajeBases order by prioridad;
+	
+    OPEN cursorB;
+
+	
+   	drop table if exists argentina_seguros.numerosAEliminar;
+    drop table if exists argentina_seguros.numerosAProcesar;
+    DROP TABLE if exists argentina_seguros.lote;
+	DROP TABLE if exists argentina_seguros.numerosTemporal;
+    Drop table if exists argentina_seguros.loteAOrdenar;
+	drop table if exists argentina_seguros.numerosAEliminar;
+	
+
+
+	insert into argentina_seguros.LogSeguros
+    value (now(),'Inicio sp');
+	
+	
+
+	#Genero el filtro
+
+	Create table argentina_seguros.numerosAEliminar
+	as select * from argentina_seguros.Tickets where idCampania=6 and datediff(argentina_seguros.Tickets.Fecha,current_date())<90;
+	
+	##Si argumentamos pero pasaron mas de 3 meses no es un numero a eliminar
+    delete from argentina_seguros.numerosAEliminar
+    where argentina_seguros.numerosAEliminar.Argumentamos=1 and 
+    datediff(current_date(),argentina_seguros.numerosAEliminar.fecha)>90; 
+
+    ##Si atendimos y no argumentamos, pero paso mas de 1 mes no es un numero a eliminar
+    delete from argentina_seguros.numerosAEliminar
+    where argentina_seguros.numerosAEliminar.Atendimos=1 and argentina_seguros.numerosAEliminar.Argumentamos=0 and
+    datediff(current_date(),argentina_seguros.numerosAEliminar.fecha)>30;
+
+	#################
+
+
+	SET SQL_SAFE_UPDATES = 0;
+	set cantidadVueltas = (select count(prioridad) from argentina_seguros.PorcentajeBases)+1;
+	set idVuelta=1;
+	update PorcentajeBases
+	set cantidadIncluidaUltimoLote = porcentaje/100 * tamanioLote;
+	
+	insert into argentina_seguros.LogSeguros
+    value (now(),'Pase los set');
+	
+	
+
+    Create table argentina_seguros.numerosAProcesar(ANI char(10));
+	truncate table numerosAProcesar;
+
+   	Create table argentina_seguros.loteAOrdenar(ANI char(10));
+    CREATE INDEX index_aniNumerosAEliminar
+    ON argentina_seguros.numerosAEliminar (ANI);
+
+    CREATE INDEX index_fechaNumerosAEliminar
+    ON argentina_seguros.numerosAEliminar (fecha);
+
+    CREATE INDEX index_ani
+    ON argentina_seguros.numerosAProcesar (ANI);
+   
+	insert into argentina_seguros.LogSeguros
+    value (now(),'Pase la creación de indices');
+
+	insert into argentina_seguros.LogSeguros
+    value(now(),concat('Cantidad de vueltas a realizar:', cantidadVueltas));
+
+	loopBases: LOOP
+    IF idVuelta=cantidadVueltas THEN
+      LEAVE loopBases;
+    END IF;
+	
+    
+
+##ACA VA TODA LA LOGICA, PARA CADA ID BASE
+	FETCH cursorB INTO idBaseCur,cantidadCur;
+
+	insert into argentina_seguros.LogSeguros
+    value (now(),concat('Entre al ciclo:',idVuelta));
+
+	truncate table numerosAProcesar;
+
+
+    insert into numerosAProcesar
+	select ANI from ContenidoBases as cb
+	where cb.idBase=idBaseCur and ANI not in (select * from loteAOrdenar);
+	
+
+	Delete npt from argentina_seguros.numerosAProcesar as npt join argentina.NoLlame as nl on (npt.ANI=nl.ANI);
+
+	delete npt from argentina_seguros.numerosAProcesar as npt join argentina_aux.telefonosNuncaContactados  as tnc
+	on tnc.ANI=npt.ANI;
+
+	
+    Delete npt from argentina_seguros.numerosAProcesar as npt 
+    join argentina_seguros.numerosAEliminar as net on (npt.ANI=net.ANI)
+    where net.atendimos=1 or net.argumentamos=1;
+
+	set cantidadDeNumerosDispo= (select count(ANI) From numerosAProcesar);
+	if (cantidadDeNumerosDispo < cantidadCur)
+	THEN
+		insert into argentina_seguros.LogSeguros
+		value (now(), concat('No hay suficientes numeros en la base. idBase: ',idBaseCur));
+		
+		update PorcentajeBases as pb set cantidadIncluidaUltimoLote = cantidadDeNumerosDispo
+		where pb.idBase=idBaseCur;
+	
+	end if;
+
+	insert into argentina_seguros.loteAOrdenar
+	select ANI from numerosAProcesar 
+	limit cantidadCur;
+
+	insert into argentina_seguros.LogSeguros
+    value(now(),concat('Fin vuelta: ',idVuelta));
+	set idVuelta=idVuelta+1;
+##########################
+	END LOOP;
+
+  CLOSE cursorB;
+  
+    
+	insert into argentina_seguros.LogSeguros
+    value(now(),'salí del loop');
+	
+	Create table argentina_seguros.lote as
+    select * 
+    from argentina_seguros.loteAOrdenar
+    order by rand();    
+
+    insert into argentina_seguros.LogSeguros
+    value(now(),'Finalizo el sp');
+        
+    /*SELECT @myCommand1 := concat("select 'Apellido',    'Calle',    'CP',    'Departamento',    'DNI',    'Localidad',    'Fecha Solicitud',    'Nombre',    'Nombre Referencia',    'Número',    'Piso',    'Relación con el Referente',    'Teléfono Discador',    'Base'  UNION select  Apellido, Calle, CP, Departamento, DNI, Localidad, `Fecha Solicitud`, asNombre, `Nombre Referencia`, Número, Piso, `relación con el Referente`,`Teléfono Discador`, Base INTO OUTFILE 'lote-", DATE_FORMAT(now(),'%d-%m-%Y-%H:%i'),".xls' FROM argentina_seguros.lote");
+    PREPARE stmt1 FROM @myCommand1;
+    EXECUTE stmt1;
+    */    
+end
+$$
