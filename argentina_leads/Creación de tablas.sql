@@ -14,7 +14,7 @@ create table llamados (
 	idLlamado int  not null auto_increment,
 	idLead int,
 	fechaHora Datetime,
-	contacto int,
+	contactado int,
 	venta int,
 	observacion varchar(50),
 	primary key (idLlamado)
@@ -30,8 +30,8 @@ create table leads (
 create table contactos (
 	idContacto int  not null auto_increment,
 	codArea varchar(10),
-	nombre varchar(25),
 	telefono varchar(15), 
+	nombre varchar(25),
 	mail varchar(30),
 	primary key (idContacto)
 )

@@ -1,0 +1,66 @@
+DELIMITER $$
+create procedure argentina_leads.sp_actualizarLeads()
+begin
+    
+	
+	Declare idBaseCur int;
+
+	DECLARE cursorB CURSOR FOR SELECT idBase,cantidadIncluidaUltimoLote FROM PorcentajeBases order by prioridad;
+	
+    OPEN cursorB;
+
+	
+	
+
+
+	insert into argentina_leads.log
+    value (now(),'Inicio sp');
+	
+	SET SQL_SAFE_UPDATES = 0;
+
+	set cantidadVueltas = (select count(prioridad) from argentina_seguros.PorcentajeBases)+1;
+	set idVuelta=1;
+	
+	insert into argentina_leads.log
+    value(now(),concat('Cantidad de vueltas a realizar:', cantidadVueltas));
+
+	loopBases: LOOP
+    IF idVuelta=cantidadVueltas THEN
+      LEAVE loopBases;
+    END IF;
+	 
+
+##ACA VA TODA LA LOGICA, PARA CADA VUELTA
+	FETCH cursorB INTO idBaseCur,cantidadCur;
+
+	insert into argentina_leads.log
+    value (now(),concat('Entre al ciclo:',idVuelta));
+
+	set cantidadDeNumerosDispo= (select count(ANI) From numerosAProcesar);
+	if (cantidadDeNumerosDispo < cantidadCur)
+	THEN
+		insert into argentina_seguros.LogSeguros
+		value (now(), concat('No hay suficientes numeros en la base. idBase: ',idBaseCur));
+		
+		update PorcentajeBases as pb set cantidadIncluidaUltimoLote = cantidadDeNumerosDispo
+		where pb.idBase=idBaseCur;
+	
+	end if;
+
+	insert into argentina_leads.log
+    value(now(),concat('Fin vuelta: ',idVuelta));
+	set idVuelta=idVuelta+1;
+##########################
+	END LOOP;
+
+  CLOSE cursorB;
+  
+    
+	insert into argentina_leads.log
+    value(now(),'salí del loop');
+	
+	insert into argentina_leads.log
+    value(now(),'Finalizo el sp');
+        
+end
+$$
