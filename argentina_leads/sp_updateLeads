@@ -2,23 +2,28 @@ DELIMITER $$
 create procedure argentina_leads.sp_actualizarLeads()
 begin
     
-	
-	Declare idBaseCur int;
+	Declare idlead int;
+	Declare codArea varchar (10);
+	Declare landing varchar(150);
+	Declare nombre varchar(100);
+	declare tel varchar(20);
+	declare mail varchar(50);
+	declare comentarios varchar (500);
+	declare fechaHora timestamp;
+	declare cantidadVueltas int;
+	declare idVuelta int;
 
-	DECLARE cursorB CURSOR FOR SELECT idBase,cantidadIncluidaUltimoLote FROM PorcentajeBases order by prioridad;
+	DECLARE cursorB CURSOR FOR SELECT idLead,codArea,landing,nombre,tel,mail,comentarios,fechaHora
+	FROM leads where procesado=0;
 	
     OPEN cursorB;
-
-	
-	
-
 
 	insert into argentina_leads.log
     value (now(),'Inicio sp');
 	
 	SET SQL_SAFE_UPDATES = 0;
 
-	set cantidadVueltas = (select count(prioridad) from argentina_seguros.PorcentajeBases)+1;
+	set cantidadVueltas = (select count(idLead) from argentina_leads.leads where procesado=0)+1;
 	set idVuelta=1;
 	
 	insert into argentina_leads.log
@@ -31,21 +36,13 @@ begin
 	 
 
 ##ACA VA TODA LA LOGICA, PARA CADA VUELTA
-	FETCH cursorB INTO idBaseCur,cantidadCur;
 
 	insert into argentina_leads.log
     value (now(),concat('Entre al ciclo:',idVuelta));
 
-	set cantidadDeNumerosDispo= (select count(ANI) From numerosAProcesar);
-	if (cantidadDeNumerosDispo < cantidadCur)
-	THEN
-		insert into argentina_seguros.LogSeguros
-		value (now(), concat('No hay suficientes numeros en la base. idBase: ',idBaseCur));
-		
-		update PorcentajeBases as pb set cantidadIncluidaUltimoLote = cantidadDeNumerosDispo
-		where pb.idBase=idBaseCur;
-	
-	end if;
+	FETCH cursorB INTO idLead,codArea,landing,nombre,tel,mail,comentarios,fechaHora;
+
+	##ACA TENGO QUE MANDAR A CADA TABLA LOS DATOS QUE CORRESPONDAN
 
 	insert into argentina_leads.log
     value(now(),concat('Fin vuelta: ',idVuelta));
