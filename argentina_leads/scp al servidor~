@@ -1,0 +1,1 @@
+scp planillaLeadsCOPIA.csv root@192.96.206.97:/var/lib/mysql/argentina_leads/planillas

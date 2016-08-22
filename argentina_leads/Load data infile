@@ -1,0 +1,7 @@
+
+LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/prueba.csv' 
+INTO TABLE prueba 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+ignore 1 rows;
