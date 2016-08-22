@@ -1,29 +1,37 @@
+#drop procedure argentina_leads.sp_actualizarLeads;
+
 DELIMITER $$
+
 create procedure argentina_leads.sp_actualizarLeads()
 begin
     
-	Declare idlead int;
-	Declare codArea varchar (10);
-	Declare landing varchar(150);
-	Declare nombre varchar(100);
-	declare tel varchar(20);
-	declare mail varchar(50);
-	declare comentarios varchar (500);
-	declare fechaHora timestamp;
+	Declare idleadCur int;
+	Declare codAreaCur varchar (10);
+	Declare landingCur varchar(150);
+	Declare nombreCur varchar(100);
+	declare telCur varchar(20);
+	declare mailCur varchar(50);
+	declare comentariosCur varchar (500);
+	declare fechaHoraCur timestamp;
 	declare cantidadVueltas int;
 	declare idVuelta int;
+	declare idPiezaCur int;
+	declare idMedioCur int;
+	declare idContactoCur int;
 
 	DECLARE cursorB CURSOR FOR SELECT idLead,codArea,landing,nombre,tel,mail,comentarios,fechaHora
-	FROM leads where procesado=0;
+	FROM leads;
 	
     OPEN cursorB;
+	
 
 	insert into argentina_leads.log
     value (now(),'Inicio sp');
 	
 	SET SQL_SAFE_UPDATES = 0;
+	set idMedioCur=1;
 
-	set cantidadVueltas = (select count(idLead) from argentina_leads.leads where procesado=0)+1;
+	set cantidadVueltas = (select count(idLead) from argentina_leads.leads)+1;
 	set idVuelta=1;
 	
 	insert into argentina_leads.log
@@ -40,9 +48,24 @@ begin
 	insert into argentina_leads.log
     value (now(),concat('Entre al ciclo:',idVuelta));
 
-	FETCH cursorB INTO idLead,codArea,landing,nombre,tel,mail,comentarios,fechaHora;
+	FETCH cursorB INTO idLeadCur,codAreaCur,landingCur,nombreCur,telCur,mailCur,comentariosCur,fechaHoraCur;
 
 	##ACA TENGO QUE MANDAR A CADA TABLA LOS DATOS QUE CORRESPONDAN
+
+	set idPiezaCur = (select idPieza from piezas where landing=landingCur);
+	
+	IF idPiezaCur is null THEN
+		insert into piezas (landing) value (landingCur);
+		set idPiezaCur = (select idPieza from piezas order by idPieza desc limit 1);
+    END IF;
+	
+	insert into contactos (codArea,telefono,nombre,mail,idPieza,idMedio)
+	value(codAreaCur,telCur,nombreCur,mailCur,idPiezaCur,idMedioCur);
+	
+	set idContactoCur = (select idContacto from contactos order by idContacto desc limit 1);
+
+	insert into leadsNormalizados 
+	value (idLeadCur,idContactoCur); #el idContacto todavia no lo tengo
 
 	insert into argentina_leads.log
     value(now(),concat('Fin vuelta: ',idVuelta));
