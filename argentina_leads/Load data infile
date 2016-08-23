@@ -1,0 +1,8 @@
+LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/planillaLeads.csv' 
+INTO TABLE llamadasSinProcesar 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+ignore 2 rows;
+
+
