@@ -1,0 +1,18 @@
+<<<<<<< HEAD
+LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/planillaLeads.csv' 
+INTO TABLE llamadasSinProcesar 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+ignore 2 rows;
+
+
+=======
+
+LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/prueba.csv' 
+INTO TABLE prueba 
+FIELDS TERMINATED BY ',' 
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+ignore 1 rows;
+>>>>>>> 28b98474feb962d4603d06c5025971fa8e8bae83
