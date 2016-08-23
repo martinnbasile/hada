@@ -24,6 +24,9 @@ begin
 	
     OPEN cursorB;
 	
+	truncate table argentina_leads.leadsNormalizados;
+	truncate table argentina_leads.contactos;
+	truncate table argentina_leads.llamados;
 
 	insert into argentina_leads.log
     value (now(),'Inicio sp');
