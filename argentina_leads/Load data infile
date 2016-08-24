@@ -1,7 +1,11 @@
-
-LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/prueba.csv' 
-INTO TABLE prueba 
+LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/planillaLeads.csv' 
+INTO TABLE llamadasSinProcesar 
 FIELDS TERMINATED BY ',' 
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
-ignore 1 rows;
+ignore 2 rows;
+
+
+
+
+

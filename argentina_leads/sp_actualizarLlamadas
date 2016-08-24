@@ -1,0 +1,103 @@
+#drop procedure argentina_leads.sp_actualizarLlamadas;
+call sp_actualizarLlamadas();
+DELIMITER $$
+
+create procedure argentina_leads.sp_actualizarLlamadas()
+begin
+    
+		
+	Declare idleadCur int;
+	Declare fechaLlamado1Cur varchar (30);
+	Declare contacto1Cur varchar(10);
+	Declare vendio1Cur varchar(10);
+	Declare fechaLlamado2Cur varchar (30);
+	Declare contacto2Cur varchar(10);
+	Declare vendio2Cur varchar(10);
+	Declare fechaLlamado3Cur varchar (30);
+	Declare contacto3Cur varchar(10);
+	Declare vendio3Cur varchar(10);
+	
+	declare cantidadFilas int;
+	declare idFila int;
+	declare numeroLlamadaFila int;
+
+	DECLARE cursorB CURSOR FOR SELECT idLead,fechaLlamado1,contacto1,vendio1,fechaLlamado2,contacto2,vendio2,fechaLlamado3,contacto3,vendio3
+	FROM llamadasSinProcesar;
+	
+    OPEN cursorB;
+	
+	insert into argentina_leads.log
+    value (now(),'Inicio sp de llamadas');
+	
+	
+	SET SQL_SAFE_UPDATES = 0;
+	
+	update llamadasSinProcesar
+	set fechaLLamado2=NULL, fechaLlamado3=NULL
+	where fechaLlamado2='';
+
+	update llamadasSinProcesar
+	set fechaLlamado3=NULL
+	where fechaLlamado3='';
+
+
+	set cantidadFilas = (select count(idLead) from argentina_leads.llamadasSinProcesar)+1;
+	set idFila=1;
+	
+	
+
+	loopFilas: LOOP
+    IF idFila=cantidadFilas THEN
+      LEAVE loopFilas;
+    END IF;
+	 
+
+##ACA VA TODA LA LOGICA, PARA CADA VUELTA
+
+	insert into argentina_leads.log
+    value (now(),concat('Entre al ciclo:',idFila));
+
+	FETCH cursorB INTO idleadCur,fechaLlamado1Cur,contacto1Cur, vendio1Cur,fechaLlamado2Cur, contacto2Cur, vendio2Cur, fechaLlamado3Cur, contacto3Cur, vendio3Cur;
+
+	##ACA TENGO QUE MANDAR A CADA TABLA LOS DATOS QUE CORRESPONDAN
+	
+	case upper(contacto1Cur) when 'SI' then set contacto1Cur=1; else set contacto1Cur=0; end case;
+	case upper(vendio1Cur) when 'SI' then set vendio1Cur=1; else set vendio1Cur=0; end case;
+	insert into llamados (idLead,fechaHora,contactado,venta)
+	value (idLeadCur,fechaLlamado1Cur,contacto1Cur,vendio1Cur);
+	
+	IF fechaLlamado2Cur is not null THEN
+		case upper(contacto2Cur) when 'SI' then set contacto2Cur=1; else set contacto2Cur=0; end case;
+		case upper(vendio2Cur) when 'SI' then set vendio2Cur=1; else set vendio2Cur=0; end case;
+		insert into llamados (idLead,fechaHora,contactado,venta)
+		value (idLeadCur,fechaLlamado2Cur,contacto2Cur,vendio2Cur);
+
+		IF fechaLlamado3Cur is not null THEN
+			case upper(contacto3Cur) when 'SI' then set contacto3Cur=1; else set contacto3Cur=0; end case;
+			case upper(vendio3Cur) when 'SI' then set vendio3Cur=1; else set vendio3Cur=0; end case;
+			insert into llamados (idLead,fechaHora,contactado,venta)
+			value (idLeadCur,fechaLlamado3Cur,contacto3Cur,vendio3Cur);
+		END IF;
+    END IF;
+	
+	
+	insert into argentina_leads.log
+    value(now(),concat('Fin vuelta: ',idFila));
+	set idFila=idFila+1;
+##########################
+	END LOOP;
+
+  CLOSE cursorB;
+  
+    
+	insert into argentina_leads.log
+    value(now(),'salí del loop');
+	
+	insert into argentina_leads.log
+    value(now(),'Finalizo el sp actualizarLlamadas');
+
+
+	
+        
+end
+$$
