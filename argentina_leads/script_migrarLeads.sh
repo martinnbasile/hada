@@ -2,11 +2,12 @@
 
 mysqldump -hhada-soft.com  -u hadasoft_bot -papolo.123 hadasoft_argentina leads > leads.sql
 
-mysql -u hadasoft_bot -papolo.123 --database leads < leads.sql
+mysql -u hadasoft_bot -papolo.123 --database argentina_leads < leads.sql
+
+mysql -u hadasoft_bot -papolo.123 <<EOF
+call argentina_leads.sp_actualizarLeads();
+EOF
 
 
-
-
-####LA VERSION POSTA ES LA QUE ESTA EN EL SERVIDOR REMITO EN /home/scripts
 
 

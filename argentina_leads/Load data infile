@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1e1e567f991d4a8fef628016efafc5d721d73448
 LOAD DATA INFILE '/var/lib/mysql/argentina_leads/planillas/planillaLeads.csv' 
 INTO TABLE llamadasSinProcesar 
 FIELDS TERMINATED BY ',' 
@@ -7,5 +11,8 @@ ignore 2 rows;
 
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 1e1e567f991d4a8fef628016efafc5d721d73448

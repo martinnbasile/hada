@@ -1,1 +1,5 @@
-scp planillaLeadsCOPIA.csv root@192.96.206.97:/var/lib/mysql/argentina_leads/planillas
+<<<<<<< HEAD
+scp planillaLeads.csv root@192.96.206.97:/var/lib/mysql/argentina_leads/planillas
+=======
+scp prueba.csv root@192.96.206.97:/var/lib/mysql/argentina_leads/planillas
+>>>>>>> 28b98474feb962d4603d06c5025971fa8e8bae83
